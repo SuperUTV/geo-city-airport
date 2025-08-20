@@ -1,4 +1,4 @@
-````markdown
+
 # Nearest Airport Finder ✈️
 
 Скрипт для поиска ближайшего **крупного или международного аэропорта** по заданным координатам (широта и долгота).  
@@ -16,7 +16,7 @@
     "airport": "Amsterdam Airport Schiphol",
     "error": null
   }
-````
+
 
 ---
 
