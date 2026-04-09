@@ -1,7 +1,3 @@
-# nearest_airport.py — ближайший крупный/международный аэропорт с локальным Parquet-кэшем
-# Формат ответа:
-#   {"airport": str|null, "error": str|null}    
-
 import os, math, csv, json, threading, time
 from io import StringIO
 from typing import Optional, Dict, Any, List, Tuple
@@ -16,13 +12,13 @@ OURAIRPORTS_PRIMARY = "https://ourairports.com/data/airports.csv"
 OURAIRPORTS_FALLBACK = "https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv"
 
 PARQUET_FILE = "airports_cache.parquet"   # локальный кэш в файле
-CACHE_TTL_SECONDS = 7 * 24 * 3600         # кэш живёт 7 дней
+CACHE_TTL_SECONDS = 7 * 24 * 3600         # кэш живет 7 дней
 
 MAX_AIRPORT_DISTANCE_KM = 300.0           # максимальное расстояние поиска аэропорта
 AIRPORT_TYPES = {"large_airport", "medium_airport"}  # какие типы аэропортов нам нужны
 REQUIRE_SCHEDULED_SERVICE = True          # брать только те аэропорты, где есть регулярные рейсы
 
-# --- Функция для расчёта расстояния между координатами (по формуле гаверсинуса) ---
+# --- Функция для расчета расстояния между координатами (по формуле гаверсинуса) ---
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float, phi1: float, cos_phi1: float) -> float:
     R = 6371.0088
     phi2 = math.radians(lat2)
@@ -44,7 +40,7 @@ def _download_text(url: str, timeout: int = 20) -> Optional[str]:
     except requests.RequestException:
         return None
 
-# --- Проверка, что parquet-файл ещё свежий ---
+# --- Проверка, что parquet-файл еще свежий ---
 def _parquet_is_fresh(path: str) -> bool:
     return os.path.exists(path) and (time.time() - os.path.getmtime(path) < CACHE_TTL_SECONDS)
 
@@ -69,7 +65,7 @@ def _read_parquet() -> List[Dict[str, Any]]:
     return [{"name": n, "lat": float(la), "lon": float(lo)}
             for n, la, lo in zip(cols["name"], cols["lat"], cols["lon"])]
 
-# --- Парсинг CSV-файла (берём только нужные аэропорты) ---
+# --- Парсинг CSV-файла (фильтр по аэропортам) ---
 def _parse_airports_csv(text: str) -> List[Dict[str, Any]]:
     airports: List[Dict[str, Any]] = []
     reader = csv.DictReader(StringIO(text))
@@ -111,7 +107,7 @@ def load_airports_once(force_refresh: bool = False, debug: bool = False) -> List
                     print(f"[debug] loaded {len(_AIRPORTS_CACHE)} airports from parquet")
                 return _AIRPORTS_CACHE
             except Exception:
-                pass  # если parquet повреждён, то перекачаем CSV
+                pass
 
         # 2) Скачиваем CSV
         txt = _download_text(OURAIRPORTS_PRIMARY) or _download_text(OURAIRPORTS_FALLBACK)
@@ -165,7 +161,7 @@ def nearest_airport(lat: float, lon: float, airports: List[Dict[str, Any]], debu
         return None, None
     return best_name, None
 
-# --- Публичная функция (то, что можно вызывать снаружи) ---
+# --- Основная функция ---
 def get_nearest_airport(lat: float, lon: float, *, refresh_airports: bool = False, debug: bool = False) -> Dict[str, Any]:
     if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
         return {"airport": None, "error": "Invalid coordinates"}
